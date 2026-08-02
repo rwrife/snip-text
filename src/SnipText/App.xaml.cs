@@ -1,4 +1,5 @@
 using System.Windows;
+using SnipText.Capture;
 using SnipText.Core;
 using SnipText.Infrastructure;
 
@@ -6,6 +7,7 @@ namespace SnipText;
 
 public partial class App : System.Windows.Application
 {
+    private readonly CaptureOverlayService _captureOverlayService = new();
     private TrayIconHost? _trayIcon;
     private GlobalHotkeyManager? _hotkeyManager;
 
@@ -43,6 +45,14 @@ public partial class App : System.Windows.Application
     private void RaiseCaptureRequested()
     {
         CaptureRequested?.Invoke(this, EventArgs.Empty);
-        _trayIcon?.ShowInfo("snip-text", "Capture requested.");
+
+        var selectedBounds = _captureOverlayService.ShowAndSelect();
+        if (selectedBounds is null)
+        {
+            _trayIcon?.ShowInfo("snip-text", "Capture cancelled.");
+            return;
+        }
+
+        _trayIcon?.ShowInfo("snip-text", $"Selected {selectedBounds.Value}.");
     }
 }
