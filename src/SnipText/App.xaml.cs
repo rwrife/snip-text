@@ -8,6 +8,9 @@ namespace SnipText;
 public partial class App : System.Windows.Application
 {
     private readonly CaptureOverlayService _captureOverlayService = new();
+    private readonly ScreenRegionCaptureService _screenRegionCaptureService =
+        new(new SystemDrawingScreenRegionCaptureBackend());
+
     private TrayIconHost? _trayIcon;
     private GlobalHotkeyManager? _hotkeyManager;
 
@@ -53,6 +56,11 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        _trayIcon?.ShowInfo("snip-text", $"Selected {selectedBounds.Value}.");
+        var captured = _screenRegionCaptureService.Capture(selectedBounds.Value);
+
+        using var softwareBitmap = SoftwareBitmapConversion.ToSoftwareBitmap(captured);
+        _trayIcon?.ShowInfo(
+            "snip-text",
+            $"Captured {captured.Width}x{captured.Height} pixels at {captured.Bounds}. SoftwareBitmap ready for OCR.");
     }
 }
