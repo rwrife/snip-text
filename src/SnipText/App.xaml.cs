@@ -2,6 +2,7 @@ using System.Windows;
 using SnipText.Capture;
 using SnipText.Core;
 using SnipText.Infrastructure;
+using SnipText.Recognition;
 
 namespace SnipText;
 
@@ -10,6 +11,7 @@ public partial class App : System.Windows.Application
     private readonly CaptureOverlayService _captureOverlayService = new();
     private readonly ScreenRegionCaptureService _screenRegionCaptureService =
         new(new SystemDrawingScreenRegionCaptureBackend());
+    private readonly ITextRecognizer _textRecognizer = new WindowsOcrRecognizer();
 
     private TrayIconHost? _trayIcon;
     private GlobalHotkeyManager? _hotkeyManager;
@@ -45,7 +47,7 @@ public partial class App : System.Windows.Application
         base.OnExit(e);
     }
 
-    private void RaiseCaptureRequested()
+    private async void RaiseCaptureRequested()
     {
         CaptureRequested?.Invoke(this, EventArgs.Empty);
 
@@ -56,11 +58,29 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        var captured = _screenRegionCaptureService.Capture(selectedBounds.Value);
+        try
+        {
+            var captured = _screenRegionCaptureService.Capture(selectedBounds.Value);
+            var recognizedText = await _textRecognizer.RecognizeAsync(captured);
 
-        using var softwareBitmap = SoftwareBitmapConversion.ToSoftwareBitmap(captured);
-        _trayIcon?.ShowInfo(
-            "snip-text",
-            $"Captured {captured.Width}x{captured.Height} pixels at {captured.Bounds}. SoftwareBitmap ready for OCR.");
+            if (string.IsNullOrWhiteSpace(recognizedText))
+            {
+                _trayIcon?.ShowWarning("snip-text", "No text detected in the selected region.");
+                return;
+            }
+
+            System.Windows.Clipboard.SetText(recognizedText);
+            _trayIcon?.ShowInfo(
+                "snip-text",
+                $"Copied {recognizedText.Length} characters to clipboard.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _trayIcon?.ShowWarning("snip-text OCR unavailable", ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _trayIcon?.ShowWarning("snip-text OCR failed", ex.Message);
+        }
     }
 }
