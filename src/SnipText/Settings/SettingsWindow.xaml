@@ -2,13 +2,15 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="snip-text settings"
-        Height="320"
-        Width="420"
+        Height="500"
+        Width="520"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False">
     <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -23,18 +25,45 @@
         <TextBlock Grid.Row="2" Text="OCR language tag (optional, e.g. en-US)" />
         <TextBox x:Name="OcrLanguageTagTextBox" Grid.Row="3" Margin="0,6,0,12" />
 
-        <StackPanel Grid.Row="4" Orientation="Vertical">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                <TextBlock Text="Output mode:" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <ComboBox x:Name="OutputModeComboBox" Width="180" />
-            </StackPanel>
-
-            <CheckBox x:Name="EnableLocalAiCheckBox"
-                      Content="Enable local-AI recognizer (fallback feature)"
-                      VerticalAlignment="Center" />
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="Output mode:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox x:Name="OutputModeComboBox" Width="220" />
         </StackPanel>
 
-        <StackPanel Grid.Row="5"
+        <StackPanel Grid.Row="5" Orientation="Vertical">
+            <CheckBox x:Name="EnableLocalAiCheckBox"
+                      Content="Enable local-AI recognizer (local/offline endpoint)"
+                      VerticalAlignment="Center"
+                      Margin="0,0,0,10" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Routing mode:" Width="220" VerticalAlignment="Center" />
+                <ComboBox x:Name="LocalAiRoutingModeComboBox" Width="240" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Local endpoint URL:" Width="220" VerticalAlignment="Center" />
+                <TextBox x:Name="LocalAiEndpointTextBox" Width="240" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Local model name:" Width="220" VerticalAlignment="Center" />
+                <TextBox x:Name="LocalAiModelTextBox" Width="240" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Native low-confidence threshold (0-1):" Width="220" VerticalAlignment="Center" />
+                <TextBox x:Name="NativeConfidenceThresholdTextBox" Width="240" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock Grid.Row="6"
+                   Margin="0,10,0,0"
+                   TextWrapping="Wrap"
+                   Foreground="DimGray"
+                   Text="Local-AI calls stay on localhost. If the endpoint is unavailable or times out, snip-text falls back to native Windows OCR." />
+
+        <StackPanel Grid.Row="7"
                     Margin="0,16,0,0"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
