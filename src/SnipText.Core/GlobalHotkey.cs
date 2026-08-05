@@ -32,6 +32,11 @@ public sealed record GlobalHotkey(HotkeyModifiers Modifiers, int VirtualKey)
             return ((char)virtualKey).ToString();
         }
 
+        if (virtualKey is >= 0x70 and <= 0x87)
+        {
+            return $"F{virtualKey - 0x6F}";
+        }
+
         return $"VK_{virtualKey:X2}";
     }
 }
