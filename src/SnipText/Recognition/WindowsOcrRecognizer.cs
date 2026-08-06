@@ -5,7 +5,7 @@ using Windows.Media.Ocr;
 
 namespace SnipText.Recognition;
 
-public sealed class WindowsOcrRecognizer : ITextRecognizer
+public sealed class WindowsOcrRecognizer : ITextRecognizer, IConfidenceTextRecognizer
 {
     private const string MissingLanguagePackMessage =
         "No Windows OCR language pack is installed. Add one in Settings > Time & language > Language & region, then install OCR components for that language.";
@@ -18,6 +18,14 @@ public sealed class WindowsOcrRecognizer : ITextRecognizer
     }
 
     public async Task<string> RecognizeAsync(CapturedScreenImage image, CancellationToken cancellationToken = default)
+    {
+        var result = await RecognizeWithConfidenceAsync(image, cancellationToken);
+        return result.Text;
+    }
+
+    public async Task<TextRecognitionResult> RecognizeWithConfidenceAsync(
+        CapturedScreenImage image,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(image);
 
@@ -32,7 +40,29 @@ public sealed class WindowsOcrRecognizer : ITextRecognizer
         var ocrResult = await _ocrEngine.RecognizeAsync(softwareBitmap).AsTask(cancellationToken);
 
         var lines = ocrResult.Lines.Select(static line => line.Words.Select(static word => word.Text));
-        return OcrTextLayoutFormatter.JoinLines(lines);
+        var text = OcrTextLayoutFormatter.JoinLines(lines);
+
+        return new TextRecognitionResult(text, EstimateConfidence(text));
+    }
+
+    private static double EstimateConfidence(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return 0d;
+        }
+
+        var visibleCharacters = text.Count(static character => !char.IsWhiteSpace(character));
+        if (visibleCharacters == 0)
+        {
+            return 0d;
+        }
+
+        var alphaNumericCharacters = text.Count(char.IsLetterOrDigit);
+        var alphaNumericRatio = alphaNumericCharacters / (double)visibleCharacters;
+        var lengthFactor = Math.Clamp(visibleCharacters / 32d, 0d, 1d);
+
+        return Math.Clamp((alphaNumericRatio * 0.7d) + (lengthFactor * 0.3d), 0d, 1d);
     }
 
     private static OcrEngine? CreateEngine(string? preferredLanguageTag)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using SnipText.Core;
 
@@ -12,11 +13,18 @@ public partial class SettingsWindow : Window
         InitializeComponent();
 
         OutputModeComboBox.ItemsSource = Enum.GetValues<SnipTextOutputMode>();
+        LocalAiRoutingModeComboBox.ItemsSource = Enum.GetValues<LocalAiRoutingMode>();
 
         HotkeyTextBox.Text = currentSettings.Hotkey.DisplayText;
         OcrLanguageTagTextBox.Text = currentSettings.OcrLanguageTag ?? string.Empty;
         OutputModeComboBox.SelectedItem = currentSettings.OutputMode;
         EnableLocalAiCheckBox.IsChecked = currentSettings.EnableLocalAi;
+
+        LocalAiRoutingModeComboBox.SelectedItem = currentSettings.LocalAiRoutingMode;
+        LocalAiEndpointTextBox.Text = currentSettings.LocalAiEndpoint;
+        LocalAiModelTextBox.Text = currentSettings.LocalAiModel;
+        NativeConfidenceThresholdTextBox.Text =
+            currentSettings.NativeLowConfidenceThreshold.ToString("0.##", CultureInfo.InvariantCulture);
     }
 
     public SnipTextSettings? SavedSettings { get; private set; }
@@ -35,6 +43,25 @@ public partial class SettingsWindow : Window
             ? selectedMode
             : SnipTextOutputMode.AutoCopy;
 
+        var routingMode = LocalAiRoutingModeComboBox.SelectedItem is LocalAiRoutingMode selectedRoutingMode
+            ? selectedRoutingMode
+            : LocalAiRoutingMode.AiFallbackWhenNativeConfidenceLow;
+
+        if (!double.TryParse(
+                NativeConfidenceThresholdTextBox.Text,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var threshold))
+        {
+            MessageBox.Show(
+                this,
+                "Native confidence threshold must be a number between 0 and 1.",
+                "snip-text settings",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
         SavedSettings = SnipTextSettings.Normalize(new SnipTextSettings
         {
             Hotkey = hotkey,
@@ -43,6 +70,10 @@ public partial class SettingsWindow : Window
                 : OcrLanguageTagTextBox.Text.Trim(),
             OutputMode = outputMode,
             EnableLocalAi = EnableLocalAiCheckBox.IsChecked == true,
+            LocalAiRoutingMode = routingMode,
+            LocalAiEndpoint = LocalAiEndpointTextBox.Text,
+            LocalAiModel = LocalAiModelTextBox.Text,
+            NativeLowConfidenceThreshold = threshold,
         });
 
         DialogResult = true;

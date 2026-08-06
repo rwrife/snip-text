@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Windows;
 using SnipText.Capture;
 using SnipText.Core;
@@ -14,6 +15,7 @@ public partial class App : System.Windows.Application
     private readonly ScreenRegionCaptureService _screenRegionCaptureService =
         new(new SystemDrawingScreenRegionCaptureBackend());
     private readonly ISnipTextSettingsStore _settingsStore = new JsonSnipTextSettingsStore();
+    private readonly HttpClient _httpClient = new();
 
     private ITextRecognizer _textRecognizer = new WindowsOcrRecognizer();
     private SnipTextSettings _settings = SnipTextSettings.Default;
@@ -29,7 +31,7 @@ public partial class App : System.Windows.Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _settings = SnipTextSettings.Normalize(await _settingsStore.LoadAsync());
-        _textRecognizer = new WindowsOcrRecognizer(_settings.OcrLanguageTag);
+        _textRecognizer = BuildTextRecognizer(_settings);
 
         _trayIcon = new TrayIconHost();
         _trayIcon.CaptureClicked += (_, _) => RaiseCaptureRequested();
@@ -46,6 +48,7 @@ public partial class App : System.Windows.Application
     {
         _hotkeyManager?.Dispose();
         _trayIcon?.Dispose();
+        _httpClient.Dispose();
         base.OnExit(e);
     }
 
@@ -63,13 +66,42 @@ public partial class App : System.Windows.Application
         try
         {
             await _settingsStore.SaveAsync(_settings);
-            _textRecognizer = new WindowsOcrRecognizer(_settings.OcrLanguageTag);
+            _textRecognizer = BuildTextRecognizer(_settings);
             RegisterHotkey(_settings.Hotkey);
             _trayIcon?.ShowInfo("snip-text", "Settings saved.");
         }
         catch (Exception ex)
         {
             _trayIcon?.ShowWarning("snip-text settings", $"Failed to save settings: {ex.Message}");
+        }
+    }
+
+    private ITextRecognizer BuildTextRecognizer(SnipTextSettings settings)
+    {
+        var nativeRecognizer = new WindowsOcrRecognizer(settings.OcrLanguageTag);
+
+        if (!settings.EnableLocalAi)
+        {
+            return nativeRecognizer;
+        }
+
+        try
+        {
+            var localAiRecognizer = new LocalAiVisionRecognizer(
+                _httpClient,
+                settings.LocalAiEndpoint,
+                settings.LocalAiModel);
+
+            return new AdaptiveTextRecognizer(
+                nativeRecognizer,
+                localAiRecognizer,
+                settings.LocalAiRoutingMode,
+                settings.NativeLowConfidenceThreshold);
+        }
+        catch (ArgumentException ex)
+        {
+            _trayIcon?.ShowWarning("snip-text local-AI settings", $"Local-AI disabled: {ex.Message}");
+            return nativeRecognizer;
         }
     }
 

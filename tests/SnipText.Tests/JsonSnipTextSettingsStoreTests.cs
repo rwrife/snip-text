@@ -28,6 +28,10 @@ public sealed class JsonSnipTextSettingsStoreTests
             OcrLanguageTag = "en-US",
             OutputMode = SnipTextOutputMode.Preview,
             EnableLocalAi = true,
+            LocalAiRoutingMode = LocalAiRoutingMode.AiOnly,
+            LocalAiEndpoint = "http://127.0.0.1:8080/v1/chat/completions",
+            LocalAiModel = "qwen2.5vl:7b",
+            NativeLowConfidenceThreshold = 0.4,
         };
 
         await store.SaveAsync(expected);
@@ -64,7 +68,11 @@ public sealed class JsonSnipTextSettingsStoreTests
           },
           "ocrLanguageTag": " en-US ",
           "outputMode": 1,
-          "enableLocalAi": false
+          "enableLocalAi": false,
+          "localAiRoutingMode": 2,
+          "localAiEndpoint": " http://127.0.0.1:11434/v1/chat/completions ",
+          "localAiModel": " minicpm-v ",
+          "nativeLowConfidenceThreshold": 1.5
         }
         """;
 
@@ -76,6 +84,10 @@ public sealed class JsonSnipTextSettingsStoreTests
         Assert.Equal(SnipTextSettings.Default.Hotkey, settings.Hotkey);
         Assert.Equal("en-US", settings.OcrLanguageTag);
         Assert.Equal(SnipTextOutputMode.Preview, settings.OutputMode);
+        Assert.Equal(LocalAiRoutingMode.AiFallbackWhenNativeConfidenceLow, settings.LocalAiRoutingMode);
+        Assert.Equal("http://127.0.0.1:11434/v1/chat/completions", settings.LocalAiEndpoint);
+        Assert.Equal("minicpm-v", settings.LocalAiModel);
+        Assert.Equal(1d, settings.NativeLowConfidenceThreshold);
     }
 
     private static string CreateTempDirectory()
