@@ -35,7 +35,7 @@ public partial class SettingsWindow : Window
 
         if (!GlobalHotkeyParser.TryParse(hotkeyText, out var hotkey, out var error))
         {
-            MessageBox.Show(this, error ?? "Invalid hotkey.", "snip-text settings", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show(this, error ?? "Invalid hotkey.", "snip-text settings", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
 
@@ -53,12 +53,12 @@ public partial class SettingsWindow : Window
                 CultureInfo.InvariantCulture,
                 out var threshold))
         {
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 this,
                 "Native confidence threshold must be a number between 0 and 1.",
                 "snip-text settings",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
             return;
         }
 

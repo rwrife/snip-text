@@ -38,9 +38,54 @@ Windows ships a capable OCR engine, but it's buried behind an API with no friend
 ```powershell
 git clone https://github.com/rwrife/snip-text.git
 cd snip-text
-dotnet build -c Release
-dotnet run --project src/SnipText
+dotnet build src/SnipText/SnipText.csproj -c Release
+dotnet run --project src/SnipText/SnipText.csproj
 ```
+
+## CI and release packaging
+
+### CI (push + pull request)
+
+GitHub Actions runs on every push and pull request via `.github/workflows/ci.yml`:
+
+- Build the WPF app (`src/SnipText/SnipText.csproj`)
+- Run xUnit tests (`tests/SnipText.Tests/SnipText.Tests.csproj`)
+
+### Portable self-contained zip (win-x64)
+
+The release workflow `.github/workflows/release-windows.yml` publishes a self-contained Windows x64 build and zips it as:
+
+- `snip-text-win-x64.zip`
+
+You can produce the same artifact locally on Windows:
+
+```powershell
+pwsh ./scripts/publish-win-x64.ps1 -Configuration Release
+```
+
+When a `v*` tag is pushed, the workflow automatically attaches the zip to the corresponding GitHub Release.
+
+Tagging example:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+### MSIX packaging config
+
+MSIX packaging scaffolding lives under `packaging/SnipText.Package/`:
+
+- `SnipText.Package.wapproj`
+- `Package.appxmanifest`
+
+Build locally on Windows with Visual Studio Build Tools / MSBuild:
+
+```powershell
+pwsh ./scripts/build-msix.ps1 -Configuration Release -Platform x64
+```
+
+> Note: replace the placeholder assets under `packaging/SnipText.Package/Assets/` and configure signing as part of release hardening.
 
 ## Example workflow
 

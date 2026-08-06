@@ -24,7 +24,7 @@ public partial class EditablePreviewWindow : Window
             return;
         }
 
-        Clipboard.SetText(text);
+        System.Windows.Clipboard.SetText(text);
         StatusTextBlock.Text = $"Copied {text.Length} characters.";
     }
 
