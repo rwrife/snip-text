@@ -35,7 +35,7 @@ public partial class SettingsWindow : Window
 
         if (!GlobalHotkeyParser.TryParse(hotkeyText, out var hotkey, out var error))
         {
-            MessageBox.Show(this, error ?? "Invalid hotkey.", "snip-text settings", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show(this, error ?? "Invalid hotkey.", "snip-text settings", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
 

@@ -152,7 +152,7 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            Clipboard.SetText(recognizedText);
+            System.Windows.Clipboard.SetText(recognizedText);
             _trayIcon?.ShowInfo(
                 "snip-text",
                 $"Copied {recognizedText.Length} characters to clipboard.");
