@@ -53,12 +53,12 @@ public partial class SettingsWindow : Window
                 CultureInfo.InvariantCulture,
                 out var threshold))
         {
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 this,
                 "Native confidence threshold must be a number between 0 and 1.",
                 "snip-text settings",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
             return;
         }
 
